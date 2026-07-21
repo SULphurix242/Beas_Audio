@@ -1,0 +1,3 @@
+D:\Software\cmake\bin\cmake.exe -E rm -f CMakeFiles\beas_audio_test.dir/objects.a
+D:\Language\c++\ucrt64\bin\ar.exe qc CMakeFiles\beas_audio_test.dir/objects.a @CMakeFiles\beas_audio_test.dir\objects1.rsp
+D:\Language\c++\ucrt64\bin\c++.exe -O2 -fno-lto -mstackrealign -Wl,--whole-archive CMakeFiles\beas_audio_test.dir/objects.a -Wl,--no-whole-archive -o beas_audio_test.exe -Wl,--out-implib,libbeas_audio_test.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\beas_audio_test.dir\linkLibs.rsp

@@ -1,0 +1,2 @@
+D:\Language\c++\ucrt64\bin\ar.exe qc libpffft.a CMakeFiles/pffft.dir/third_party/pffft/pffft/pffft.c.obj
+D:\Language\c++\ucrt64\bin\ranlib.exe libpffft.a

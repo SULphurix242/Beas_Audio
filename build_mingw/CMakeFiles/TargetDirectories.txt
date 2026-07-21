@@ -1,0 +1,5 @@
+D:/BEAS/Beas_Audio/build_mingw/CMakeFiles/pffft.dir
+D:/BEAS/Beas_Audio/build_mingw/CMakeFiles/beas_audio.dir
+D:/BEAS/Beas_Audio/build_mingw/CMakeFiles/beas_audio_test.dir
+D:/BEAS/Beas_Audio/build_mingw/CMakeFiles/edit_cache.dir
+D:/BEAS/Beas_Audio/build_mingw/CMakeFiles/rebuild_cache.dir
