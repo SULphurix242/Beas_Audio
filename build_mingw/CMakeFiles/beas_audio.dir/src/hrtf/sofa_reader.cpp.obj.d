@@ -1,7 +1,6 @@
-CMakeFiles/beas_audio.dir/src/dsp/hrtf.cpp.obj: \
- D:\BEAS\Beas_Audio\src\dsp\hrtf.cpp D:\BEAS\Beas_Audio\src\dsp\hrtf.h \
- D:/BEAS/Beas_Audio/src/internal.h \
- D:/BEAS/Beas_Audio/include/beas/beas_audio.h \
+CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj: \
+ D:\BEAS\Beas_Audio\src\hrtf\sofa_reader.cpp \
+ D:\BEAS\Beas_Audio\src\hrtf\sofa_reader.h \
  D:/Language/c++/ucrt64/lib/gcc/x86_64-w64-mingw32/15.2.0/include/stdint.h \
  D:/Language/c++/ucrt64/include/stdint.h \
  D:/Language/c++/ucrt64/include/crtdefs.h \
@@ -13,22 +12,11 @@ CMakeFiles/beas_audio.dir/src/dsp/hrtf.cpp.obj: \
  D:/Language/c++/ucrt64/include/sdks/_mingw_ddk.h \
  D:/Language/c++/ucrt64/lib/gcc/x86_64-w64-mingw32/15.2.0/include/stddef.h \
  D:/Language/c++/ucrt64/include/stddef.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/cstdint \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/cstdlib \
  D:/Language/c++/ucrt64/include/c++/15.2.0/x86_64-w64-mingw32/bits/c++config.h \
  D:/Language/c++/ucrt64/include/c++/15.2.0/x86_64-w64-mingw32/bits/os_defines.h \
  D:/Language/c++/ucrt64/include/c++/15.2.0/x86_64-w64-mingw32/bits/cpu_defines.h \
  D:/Language/c++/ucrt64/include/c++/15.2.0/pstl/pstl_config.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/cstring \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/version.h \
- D:/Language/c++/ucrt64/include/string.h \
- D:/Language/c++/ucrt64/include/sec_api/string_s.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/cmath \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/requires_hosted.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/cpp_type_traits.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/type_traits \
- D:/Language/c++/ucrt64/include/c++/15.2.0/ext/type_traits.h \
- D:/Language/c++/ucrt64/include/math.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/std_abs.h \
  D:/Language/c++/ucrt64/include/stdlib.h \
  D:/Language/c++/ucrt64/include/corecrt_wstdlib.h \
  D:/Language/c++/ucrt64/lib/gcc/x86_64-w64-mingw32/15.2.0/include/limits.h \
@@ -39,6 +27,17 @@ CMakeFiles/beas_audio.dir/src/dsp/hrtf.cpp.obj: \
  D:/Language/c++/ucrt64/include/malloc.h \
  D:/Language/c++/ucrt64/lib/gcc/x86_64-w64-mingw32/15.2.0/include/mm_malloc.h \
  D:/Language/c++/ucrt64/include/errno.h \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/bits/std_abs.h \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/cstring \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/bits/version.h \
+ D:/Language/c++/ucrt64/include/string.h \
+ D:/Language/c++/ucrt64/include/sec_api/string_s.h \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/cmath \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/bits/requires_hosted.h \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/bits/cpp_type_traits.h \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/type_traits \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/ext/type_traits.h \
+ D:/Language/c++/ucrt64/include/math.h \
  D:/Language/c++/ucrt64/include/c++/15.2.0/bits/specfun.h \
  D:/Language/c++/ucrt64/include/c++/15.2.0/bits/stl_algobase.h \
  D:/Language/c++/ucrt64/include/c++/15.2.0/bits/functexcept.h \
@@ -70,22 +69,11 @@ CMakeFiles/beas_audio.dir/src/dsp/hrtf.cpp.obj: \
  D:/Language/c++/ucrt64/include/c++/15.2.0/tr1/poly_hermite.tcc \
  D:/Language/c++/ucrt64/include/c++/15.2.0/tr1/poly_laguerre.tcc \
  D:/Language/c++/ucrt64/include/c++/15.2.0/tr1/riemann_zeta.tcc \
- D:/Language/c++/ucrt64/include/c++/15.2.0/atomic \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/atomic_base.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/new \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/exception.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/atomic_lockfree_defines.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/climits \
- D:/BEAS/Beas_Audio/third_party/pffft/pffft/pffft.h \
- D:/BEAS/Beas_Audio/src/hrtf/sofa_reader.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/algorithm \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/stl_algo.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/algorithmfwd.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/initializer_list \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/stl_heap.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/uniform_int_dist.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/stl_tempbuf.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/bits/stl_construct.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/cstdlib \
- D:/Language/c++/ucrt64/include/c++/15.2.0/pstl/glue_algorithm_defs.h \
- D:/Language/c++/ucrt64/include/c++/15.2.0/pstl/execution_defs.h
+ D:/Language/c++/ucrt64/include/c++/15.2.0/cstdio \
+ D:/Language/c++/ucrt64/include/stdio.h \
+ D:/Language/c++/ucrt64/include/corecrt_stdio_config.h \
+ D:/Language/c++/ucrt64/include/_mingw_off_t.h \
+ D:/Language/c++/ucrt64/include/swprintf.inl \
+ D:/Language/c++/ucrt64/include/sec_api/stdio_s.h \
+ D:/Language/c++/ucrt64/include/c++/15.2.0/cassert \
+ D:/Language/c++/ucrt64/include/assert.h

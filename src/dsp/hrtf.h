@@ -42,3 +42,8 @@ void ba_conv_process(BaAudioContext* ctx, int slot_idx,
                      const float* in, float* out_L, float* out_R);
 void ba_start_crossfade(BaCluster* cluster, BaIRSet* new_ir);
 void convolve_clusters(BaAudioContext* ctx, float* out_L, float* out_R, uint32_t N);
+
+/* Load HRTF from SOFA file, replacing current embedded HRTF database.
+ * Returns 0 (BA_OK) on success, negative error code on failure.
+ * On success the old database is freed and ctx->hrtf_db points to the new one. */
+int ba_hrtf_load_sofa(BaAudioContext* ctx, const char* path);

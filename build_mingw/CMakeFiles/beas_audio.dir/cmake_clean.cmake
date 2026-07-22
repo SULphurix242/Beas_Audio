@@ -15,6 +15,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/beas_audio.dir/src/dsp/sanitize.cpp.obj.d"
   "CMakeFiles/beas_audio.dir/src/dsp/simd.cpp.obj"
   "CMakeFiles/beas_audio.dir/src/dsp/simd.cpp.obj.d"
+  "CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj"
+  "CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj.d"
   "CMakeFiles/beas_audio.dir/src/masking/masking.cpp.obj"
   "CMakeFiles/beas_audio.dir/src/masking/masking.cpp.obj.d"
   "CMakeFiles/beas_audio.dir/src/pci/pci.cpp.obj"

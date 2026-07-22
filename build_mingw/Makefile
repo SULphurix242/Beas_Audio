@@ -346,6 +346,30 @@ src/dsp/simd.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\beas_audio.dir\build.make CMakeFiles/beas_audio.dir/src/dsp/simd.cpp.s
 .PHONY : src/dsp/simd.cpp.s
 
+src/hrtf/sofa_reader.obj: src/hrtf/sofa_reader.cpp.obj
+.PHONY : src/hrtf/sofa_reader.obj
+
+# target to build an object file
+src/hrtf/sofa_reader.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\beas_audio.dir\build.make CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj
+.PHONY : src/hrtf/sofa_reader.cpp.obj
+
+src/hrtf/sofa_reader.i: src/hrtf/sofa_reader.cpp.i
+.PHONY : src/hrtf/sofa_reader.i
+
+# target to preprocess a source file
+src/hrtf/sofa_reader.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\beas_audio.dir\build.make CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.i
+.PHONY : src/hrtf/sofa_reader.cpp.i
+
+src/hrtf/sofa_reader.s: src/hrtf/sofa_reader.cpp.s
+.PHONY : src/hrtf/sofa_reader.s
+
+# target to generate assembly for a file
+src/hrtf/sofa_reader.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\beas_audio.dir\build.make CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.s
+.PHONY : src/hrtf/sofa_reader.cpp.s
+
 src/masking/masking.obj: src/masking/masking.cpp.obj
 .PHONY : src/masking/masking.obj
 
@@ -573,6 +597,9 @@ help:
 	@echo ... src/dsp/simd.obj
 	@echo ... src/dsp/simd.i
 	@echo ... src/dsp/simd.s
+	@echo ... src/hrtf/sofa_reader.obj
+	@echo ... src/hrtf/sofa_reader.i
+	@echo ... src/hrtf/sofa_reader.s
 	@echo ... src/masking/masking.obj
 	@echo ... src/masking/masking.i
 	@echo ... src/masking/masking.s

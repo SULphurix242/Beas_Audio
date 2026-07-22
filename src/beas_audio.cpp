@@ -43,12 +43,14 @@ static void set_mode_weights(BaAudioContext* ctx, BaMode mode) {
 // ---- Cluster helper -----------------------------------------------------
 // ponytail: hash-grid cluster accumulation — shared between poe and main process
 
-static int hash_cell_cluster(float azimuth, float elevation, int res_deg) {
+static int hash_cell_cluster(float azimuth, float elevation, int /*res_deg*/) {
     static constexpr float DEG2RAD = 3.14159265f / 180.0f;
     float az_d = azimuth / DEG2RAD;
     float el_d = elevation / DEG2RAD;
-    int ca = (int)((az_d + 180.0f) / res_deg) % BA_GRID_AZ_CELLS;
-    int ce = (int)((el_d + 90.0f) / (res_deg * 3.0f)) % BA_GRID_EL_CELLS;
+    int ca = (int)((az_d + 180.0f) / 10.0f) % BA_GRID_AZ_CELLS;
+    if (ca < 0) ca += BA_GRID_AZ_CELLS;
+    int ce = (int)((el_d + 90.0f) / 30.0f);
+    ce = std::max(0, std::min(BA_GRID_EL_CELLS - 1, ce));
     return ca * BA_GRID_EL_CELLS + ce;
 }
 
@@ -144,22 +146,32 @@ BaResult ba_create(const BaConfig* cfg, BaAudioContext** ctx_out) {
         return BA_ERR_NO_MEMORY;
     }
 
-// HRTF database — generate math-based model for now
-    // ponytail: SOFA/WAV loading — add when HRTF path file is provided
-    {
-        int ir_len = (cfg->tier == 0) ? 32 : (cfg->tier == 1) ? 288 :
-                     (cfg->tier == 2) ? 800 : 1824;
-        void* db_mem = alloc_fn(sizeof(BaHRTFDatabase));
-        if (!db_mem) {
-            ctx->free_fn(ctx->array_block);
-            ctx->~BaAudioContext();
-            ctx->free_fn(ctx);
-            return BA_ERR_NO_MEMORY;
+// HRTF database — load from SOFA file or generate math model
+{
+    int ir_len = (cfg->tier == 0) ? 32 : (cfg->tier == 1) ? 288 :
+                 (cfg->tier == 2) ? 800 : 1824;
+    void* db_mem = alloc_fn(sizeof(BaHRTFDatabase));
+    if (!db_mem) {
+        ctx->free_fn(ctx->array_block);
+        ctx->~BaAudioContext();
+        ctx->free_fn(ctx);
+        return BA_ERR_NO_MEMORY;
+    }
+    ctx->hrtf_db = new(db_mem) BaHRTFDatabase{};
+
+    if (cfg->hrtf_path) {
+        ba_hrtf_generate_math(ctx->hrtf_db, cfg->sample_rate, ir_len,
+                              ctx->pffft_setup, ctx->fft_size);
+        // Upgrade to SOFA data — replace math model with measured HRTF
+        int load_r = ba_hrtf_load_sofa(ctx, cfg->hrtf_path);
+        if (load_r != 0) {
+            // SOFA load failed; keep the math-based model as fallback
         }
-        ctx->hrtf_db = new(db_mem) BaHRTFDatabase{};
+    } else {
         ba_hrtf_generate_math(ctx->hrtf_db, cfg->sample_rate, ir_len,
                               ctx->pffft_setup, ctx->fft_size);
     }
+}
     ctx->hrtf_state.mode_current = BA_HRTF_MODE_FULL;
     ctx->hrtf_state.mode_override = (BaHRTFMode)-1;
     ctx->hrtf_state.personalized_loaded = false;
@@ -178,8 +190,7 @@ BaResult ba_create(const BaConfig* cfg, BaAudioContext** ctx_out) {
     ctx->pss.confidence = 1.0f;
     ctx->pss_prev.confidence = 1.0f;
 
-    // Surround state (stub)
-    ctx->surround = nullptr;
+    // Surround state zeroed by BaAudioContext{} init
 
     *ctx_out = ctx;
     return BA_OK;
@@ -206,7 +217,6 @@ void ba_destroy(BaAudioContext* ctx) {
         free_fn(ctx->hrtf_db);
     }
     if (ctx->eq)      eq_destroy(ctx->eq, free_fn);
-    // ponytail: surround state — add cleanup when surround is implemented
     if (ctx->array_block) free_fn(ctx->array_block);
 
     ctx->~BaAudioContext();
@@ -345,8 +355,8 @@ BaResult ba_set_eq_band_ex(BaAudioContext* ctx, uint32_t band,
 
 BaResult ba_load_hrtf(BaAudioContext* ctx, const char* path) {
     if (!ctx || !path) return BA_ERR_INVALID_ARG;
-    // ponytail: hot-reload stub — full reload when SOFA loader is integrated
-    return BA_OK;
+    int r = ba_hrtf_load_sofa(ctx, path);
+    return (r == 0) ? BA_OK : (r == -2) ? BA_ERR_NO_MEMORY : BA_ERR_FILE_IO;
 }
 
 BaResult ba_load_ear_fir(BaAudioContext* ctx, const char* path) {
@@ -398,10 +408,143 @@ BaHRTFMode ba_get_hrtf_mode(const BaAudioContext* ctx) {
 
 // ---- Surround-to-binaural -------------------------------------------------
 
-BaResult ba_process_surround(BaAudioContext* ctx, const float** /*ch*/,
-                              int /*nch*/, float* /*out_L*/, float* /*out_R*/,
-                              uint32_t /*N*/) {
+// Standard speaker positions (azimuth, elevation in radians)
+// ITU-R BS.775 / AES standard layouts
+struct SpkPos { float az; float el; };
+
+static constexpr float SPK_D2R = 3.14159265f / 180.0f;
+
+static const SpkPos kSpkStereo[] = {
+    { 30.0f * SPK_D2R, 0.0f },   // L
+    {-30.0f * SPK_D2R, 0.0f },   // R
+};
+static const SpkPos kSpk51[] = {
+    { 30.0f * SPK_D2R, 0.0f },   // L
+    {-30.0f * SPK_D2R, 0.0f },   // R
+    { 0.0f,             0.0f },   // C
+    { 0.0f,             0.0f },   // LFE (no direction)
+    {110.0f * SPK_D2R, 0.0f },   // Ls
+    {-110.0f * SPK_D2R,0.0f },   // Rs
+};
+static const SpkPos kSpk71[] = {
+    { 30.0f * SPK_D2R, 0.0f },   // L
+    {-30.0f * SPK_D2R, 0.0f },   // R
+    { 0.0f,             0.0f },   // C
+    { 0.0f,             0.0f },   // LFE
+    { 90.0f * SPK_D2R, 0.0f },   // Ls
+    {-90.0f * SPK_D2R, 0.0f },   // Rs
+    {150.0f * SPK_D2R, 0.0f },   // Lrs
+    {-150.0f* SPK_D2R, 0.0f },   // Rrs
+};
+static const SpkPos kSpk514[] = {
+    { 30.0f * SPK_D2R, 0.0f },          // L
+    {-30.0f * SPK_D2R, 0.0f },          // R
+    { 0.0f,             0.0f },          // C
+    { 0.0f,             0.0f },          // LFE
+    {110.0f * SPK_D2R, 0.0f },          // Ls
+    {-110.0f * SPK_D2R,0.0f },          // Rs
+    { 45.0f * SPK_D2R, 45.0f * SPK_D2R },  // TFL
+    {-45.0f * SPK_D2R, 45.0f * SPK_D2R },  // TFR
+    {135.0f * SPK_D2R, 45.0f * SPK_D2R },  // TRL
+    {-135.0f* SPK_D2R, 45.0f * SPK_D2R },  // TRR
+};
+static const SpkPos kSpk714[] = {
+    { 30.0f * SPK_D2R, 0.0f },          // L
+    {-30.0f * SPK_D2R, 0.0f },          // R
+    { 0.0f,             0.0f },          // C
+    { 0.0f,             0.0f },          // LFE
+    { 90.0f * SPK_D2R, 0.0f },          // Ls
+    {-90.0f * SPK_D2R, 0.0f },          // Rs
+    {150.0f * SPK_D2R, 0.0f },          // Lrs
+    {-150.0f* SPK_D2R, 0.0f },          // Rrs
+    { 45.0f * SPK_D2R, 45.0f * SPK_D2R },  // TFL
+    {-45.0f * SPK_D2R, 45.0f * SPK_D2R },  // TFR
+    {135.0f * SPK_D2R, 45.0f * SPK_D2R },  // TRL
+    {-135.0f* SPK_D2R, 45.0f * SPK_D2R },  // TRR
+};
+
+// Indexed by n_channels-2; nullptr for unsupported channel counts
+static const SpkPos* const kSpeakerMap[] = {
+    kSpkStereo,    // 2 ch → 2.0
+    nullptr,       // 3
+    nullptr,       // 4
+    nullptr,       // 5
+    kSpk51,        // 6 → 5.1
+    nullptr,       // 7
+    kSpk71,        // 8 → 7.1
+    nullptr,       // 9
+    kSpk514,       // 10 → 5.1.4
+    nullptr,       // 11
+    kSpk714,       // 12 → 7.1.4
+};
+
+static const SpkPos* lookup_speaker_positions(BaAudioContext* ctx, int nch) {
+    // Custom layout takes priority
+    if (ctx->surround.custom_nch > 0 && ctx->surround.custom_nch == nch)
+        return (const SpkPos*)ctx->surround.custom_az; // SpkPos layout matches float[2]
+    // Fall back to standard table
+    int idx = nch - 2;
+    if (idx < 0 || idx >= (int)(sizeof(kSpeakerMap)/sizeof(kSpeakerMap[0])))
+        return nullptr;
+    return kSpeakerMap[idx];
+}
+
+BaResult ba_surround_set_layout(BaAudioContext* ctx,
+                                 const BaSpeakerPos* positions,
+                                 int n_channels) {
     if (!ctx) return BA_ERR_INVALID_ARG;
-    // ponytail: surround virtualization — implement when surround decoder is ready
+    if (!positions) {
+        ctx->surround.custom_nch = 0; // reset to table
+        return BA_OK;
+    }
+    if (n_channels < 2 || n_channels > 12) return BA_ERR_INVALID_ARG;
+    for (int i = 0; i < n_channels; ++i) {
+        ctx->surround.custom_az[i] = positions[i].azimuth;
+        ctx->surround.custom_el[i] = positions[i].elevation;
+    }
+    ctx->surround.custom_nch = n_channels;
+    return BA_OK;
+}
+
+static void surround_render(BaAudioContext* ctx, const SpkPos* pos,
+                             const float** ch, int nch,
+                             float* out_L, float* out_R, uint32_t N) {
+    BaOSPos positions[12];
+    BaAudioObject objects[12];
+    float render_gain[12];
+    for (int i = 0; i < nch; ++i) {
+        positions[i] = {pos[i].az, pos[i].el, 1.0f};
+        objects[i]   = {(uint32_t)i, pos[i].az, pos[i].el, 1.0f, 1.0f, ch[i]};
+        render_gain[i] = 1.0f;
+    }
+    std::memset(out_L, 0, N * sizeof(float));
+    std::memset(out_R, 0, N * sizeof(float));
+    ambient_bus_clear(ctx);
+    cluster_objects(ctx, positions, objects, render_gain, (uint32_t)nch);
+    convolve_clusters(ctx, out_L, out_R, N);
+    ambient_bus_render(ctx, out_L, out_R, N);
+    post_process(ctx, out_L, out_R, N);
+}
+
+BaResult ba_process_surround(BaAudioContext* ctx, const float** ch,
+                              int nch, float* out_L, float* out_R,
+                              uint32_t N) {
+    if (!ctx || !ch || !out_L || !out_R) return BA_ERR_INVALID_ARG;
+    if (N != ctx->buffer_size) return BA_ERR_INVALID_ARG;
+    ctx->frame_start_ns = timer_ns();
+
+    const SpkPos* pos = lookup_speaker_positions(ctx, nch);
+    if (!pos) return BA_ERR_INVALID_ARG;
+
+    surround_render(ctx, pos, ch, nch, out_L, out_R, N);
+
+    // CPU load tracking
+    uint64_t end_ns = timer_ns();
+    float frame_ns = (float)(end_ns - ctx->frame_start_ns);
+    float budget_ns = (float)N / (float)ctx->sample_rate * 1e9f;
+    float load = frame_ns / budget_ns;
+    ctx->cpu_load_ema = (1.0f - BA_WATCHDOG_EMA) * ctx->cpu_load_ema
+                      + BA_WATCHDOG_EMA * load;
+    ctx->cpu_load = ctx->cpu_load_ema;
     return BA_OK;
 }

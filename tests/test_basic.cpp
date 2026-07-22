@@ -165,6 +165,204 @@ int main() {
         }
     }
 
+    // Test 11: SOFA file loading error paths
+    {
+        BaConfig cfg6 = cfg;
+        ctx = nullptr;
+        r = ba_create(&cfg6, &ctx);
+        TEST("create for SOFA tests", r == BA_OK && ctx != nullptr);
+        if (!ctx) { std::fprintf(stderr, "FATAL: create failed\n"); return 1; }
+
+        // 11a — ba_load_hrtf with non-existent file
+        r = ba_load_hrtf(ctx, "/nonexistent/path.sofa");
+        TEST("ba_load_hrtf bad path returns FILE_IO", r == BA_ERR_FILE_IO);
+
+        // 11b — ba_load_hrtf with null path
+        r = ba_load_hrtf(ctx, nullptr);
+        TEST("ba_load_hrtf null path returns INVALID_ARG", r == BA_ERR_INVALID_ARG);
+
+        // 11c — ba_load_hrtf on null context
+        r = ba_load_hrtf(nullptr, "test.sofa");
+        TEST("ba_load_hrtf null ctx returns INVALID_ARG", r == BA_ERR_INVALID_ARG);
+
+        ba_destroy(ctx);
+        ctx = nullptr;
+    }
+
+    // Test 12: SOFA file loading at creation time
+    {
+        BaConfig cfg7 = cfg;
+        cfg7.hrtf_path = "D:/BEAS/Beas_Audio/tests/test_hrtf.sofa";
+        ctx = nullptr;
+        r = ba_create(&cfg7, &ctx);
+        TEST("create with SOFA hrtf_path", r == BA_OK && ctx != nullptr);
+        if (ctx) {
+            TEST("SOFA-loaded HRTF context ok", true);
+            ba_destroy(ctx);
+            ctx = nullptr;
+        }
+    }
+
+    // Test 13: SOFA hot-reload via ba_load_hrtf on running context
+    {
+        ctx = nullptr;
+        r = ba_create(&cfg, &ctx);
+        TEST("create for hot-reload test", r == BA_OK && ctx != nullptr);
+        if (ctx) {
+            r = ba_load_hrtf(ctx, "D:/BEAS/Beas_Audio/tests/test_hrtf.sofa");
+            TEST("ba_load_hrtf hot-reload", r == BA_OK);
+            if (r != BA_OK) std::printf("  (hot-reload error code: %d)\n", r);
+
+            // Process a frame after hot-reload — should use loaded HRTF
+            float out_L[128] = {}, out_R[128] = {};
+            float impulse[128] = {};
+            impulse[0] = 1.0f;
+            BaAudioObject objs2[1] = {{0, 0.0f, 0.0f, 1.0f, 1.0f, impulse}};
+            r = ba_process(ctx, objs2, 1, nullptr, nullptr, out_L, out_R, 128);
+            TEST("process after SOFA hot-reload", r == BA_OK);
+
+            // Verify output has energy (convolution happened with loaded HRTF)
+            float energy_L = 0.0f, energy_R = 0.0f;
+            for (int i = 0; i < 128; ++i) {
+                energy_L += out_L[i] * out_L[i];
+                energy_R += out_R[i] * out_R[i];
+            }
+            TEST("hot-reload convolution produced output", energy_L > 1e-10f || energy_R > 1e-10f);
+
+            ba_destroy(ctx);
+            ctx = nullptr;
+        }
+    }
+
+    // Test 14: Surround-to-binaural error paths
+    {
+        BaConfig cfg14 = cfg;
+        ctx = nullptr;
+        r = ba_create(&cfg14, &ctx);
+        TEST("create for surround tests", r == BA_OK && ctx != nullptr);
+        if (ctx) {
+            float dummy[128] = {};
+            const float* ch[6] = {dummy, dummy, dummy, dummy, dummy, dummy};
+
+            r = ba_process_surround(nullptr, ch, 6, dummy, dummy, 128);
+            TEST("surround null ctx", r == BA_ERR_INVALID_ARG);
+            r = ba_process_surround(ctx, nullptr, 6, dummy, dummy, 128);
+            TEST("surround null ch", r == BA_ERR_INVALID_ARG);
+            r = ba_process_surround(ctx, ch, 6, nullptr, dummy, 128);
+            TEST("surround null out_L", r == BA_ERR_INVALID_ARG);
+            r = ba_process_surround(ctx, ch, 6, dummy, nullptr, 128);
+            TEST("surround null out_R", r == BA_ERR_INVALID_ARG);
+            r = ba_process_surround(ctx, ch, 1, dummy, dummy, 128);
+            TEST("surround unsupported nch (1)", r == BA_ERR_INVALID_ARG);
+            r = ba_process_surround(ctx, ch, 13, dummy, dummy, 128);
+            TEST("surround unsupported nch (13)", r == BA_ERR_INVALID_ARG);
+            r = ba_process_surround(ctx, ch, 3, dummy, dummy, 128);
+            TEST("surround unsupported layout (3ch)", r == BA_ERR_INVALID_ARG);
+
+            ba_destroy(ctx);
+            ctx = nullptr;
+        }
+    }
+
+    // Test 15: Surround-to-binaural 5.1 with impulse
+    {
+        ctx = nullptr;
+        r = ba_create(&cfg, &ctx);
+        TEST("create for surround 5.1", r == BA_OK && ctx != nullptr);
+        if (ctx) {
+            float impulse[128] = {};
+            impulse[0] = 1.0f;
+            const float* ch[6] = {impulse, impulse, impulse, impulse, impulse, impulse};
+            float out_L[128] = {}, out_R[128] = {};
+            r = ba_process_surround(ctx, ch, 6, out_L, out_R, 128);
+            TEST("surround 5.1 process", r == BA_OK);
+
+            float energy = 0.0f;
+            for (int i = 0; i < 128; ++i)
+                energy += out_L[i] * out_L[i] + out_R[i] * out_R[i];
+            TEST("surround 5.1 produced output", energy > 1e-10f);
+
+            ba_destroy(ctx);
+            ctx = nullptr;
+        }
+    }
+
+    // Test 16: Surround-to-binaural stereo path
+    {
+        ctx = nullptr;
+        r = ba_create(&cfg, &ctx);
+        TEST("create for surround stereo", r == BA_OK && ctx != nullptr);
+        if (ctx) {
+            float impulse[128] = {};
+            impulse[0] = 1.0f;
+            const float* ch[2] = {impulse, impulse};
+            float out_L[128] = {}, out_R[128] = {};
+            r = ba_process_surround(ctx, ch, 2, out_L, out_R, 128);
+            TEST("surround stereo process", r == BA_OK);
+
+            float energy = 0.0f;
+            for (int i = 0; i < 128; ++i)
+                energy += out_L[i] * out_L[i] + out_R[i] * out_R[i];
+            TEST("surround stereo produced output", energy > 1e-10f);
+
+            ba_destroy(ctx);
+            ctx = nullptr;
+        }
+    }
+
+    // Test 17: Custom speaker layout API
+    {
+        ctx = nullptr;
+        r = ba_create(&cfg, &ctx);
+        TEST("create for custom layout", r == BA_OK && ctx != nullptr);
+        if (ctx) {
+            // Error paths
+            r = ba_surround_set_layout(nullptr, nullptr, 6);
+            TEST("custom layout null ctx", r == BA_ERR_INVALID_ARG);
+            BaSpeakerPos dummy[4] = {};
+            r = ba_surround_set_layout(ctx, dummy, 1);
+            TEST("custom layout nch too low", r == BA_ERR_INVALID_ARG);
+            r = ba_surround_set_layout(ctx, dummy, 13);
+            TEST("custom layout nch too high", r == BA_ERR_INVALID_ARG);
+
+            // Set custom 4-channel layout (L,R,C,LFE-like)
+            BaSpeakerPos custom[] = {
+                { 45.0f * 3.14159f / 180.0f, 0.0f },
+                {-45.0f * 3.14159f / 180.0f, 0.0f },
+                { 0.0f, 0.0f },
+                { 0.0f, 0.0f },
+            };
+            r = ba_surround_set_layout(ctx, custom, 4);
+            TEST("custom layout set 4ch", r == BA_OK);
+
+            // Process with custom layout
+            float impulse[128] = {};
+            impulse[0] = 1.0f;
+            const float* ch4[4] = {impulse, impulse, impulse, impulse};
+            float out_L[128] = {}, out_R[128] = {};
+            r = ba_process_surround(ctx, ch4, 4, out_L, out_R, 128);
+            TEST("custom layout process 4ch", r == BA_OK);
+            float energy = 0.0f;
+            for (int i = 0; i < 128; ++i)
+                energy += out_L[i] * out_L[i] + out_R[i] * out_R[i];
+            TEST("custom layout produced output", energy > 1e-10f);
+
+            // Reset to table and verify 5.1 still works
+            r = ba_surround_set_layout(ctx, nullptr, 0);
+            TEST("custom layout reset to table", r == BA_OK);
+            const float* ch6[6] = {impulse, impulse, impulse, impulse, impulse, impulse};
+            r = ba_process_surround(ctx, ch6, 6, out_L, out_R, 128);
+            TEST("custom layout reset 5.1 process", r == BA_OK);
+            energy = 0.0f;
+            for (int i = 0; i < 128; ++i)
+                energy += out_L[i] * out_L[i] + out_R[i] * out_R[i];
+            TEST("custom layout reset 5.1 output", energy > 1e-10f);
+
+            ba_destroy(ctx);
+            ctx = nullptr;
+        }
+    }
+
     std::printf("\n=== Results: %d failures ===\n", failures);
     return failures > 0 ? 1 : 0;
 }

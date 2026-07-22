@@ -155,8 +155,12 @@ struct BaHRTFState {
     BaHRTFDatabase* personalized_db;
 };
 
-/* ---- Surround state forward declaration --------------------------------- */
-struct BaSurroundState;
+/* ---- Surround state ----------------------------------------------------- */
+struct BaSurroundState {
+    float custom_az[12];   // custom speaker positions
+    float custom_el[12];
+    int   custom_nch;       // 0 = use standard table
+};
 
 /* ---- Main context ------------------------------------------------------ */
 struct BaAudioContext {
@@ -266,7 +270,7 @@ struct BaAudioContext {
     int       last_auto_tier;
 
     /* Surround */
-    BaSurroundState* surround;
+    BaSurroundState surround;
 
     /* Ear profiling */
     // ponytail: ear profiling session state - add when profiling is implemented

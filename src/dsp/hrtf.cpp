@@ -3,6 +3,7 @@
 // Beas Audio DSP Library — HRTF database & overlap-add convolution
 #include "hrtf.h"
 #include "pffft.h"
+#include "hrtf/sofa_reader.h"
 #include <cmath>
 #include <cstring>
 #include <algorithm>
@@ -362,11 +363,12 @@ void convolve_clusters(BaAudioContext* ctx, float* out_L, float* out_R, uint32_t
 
         // Use pre-computed freq-domain IR (avoids per-frame IR FFT at init cost)
         if (hrtf_db && hrtf_db->freq_valid) {
+            ptrdiff_t cell_idx = entry - hrtf_db->cells; // derived from lookup, not cluster index
             pffft_zconvolve_accumulate(ctx->pffft_setup, ctx->fft_workspace_X,
-                                        hrtf_db->freq_L + c * BA_HRTF_FREQ_BINS,
+                                        hrtf_db->freq_L + cell_idx * BA_HRTF_FREQ_BINS,
                                         ctx->fft_workspace_Y_L, 1.0f);
             pffft_zconvolve_accumulate(ctx->pffft_setup, ctx->fft_workspace_X,
-                                        hrtf_db->freq_R + c * BA_HRTF_FREQ_BINS,
+                                        hrtf_db->freq_R + cell_idx * BA_HRTF_FREQ_BINS,
                                         ctx->fft_workspace_Y_R, 1.0f);
         } else {
             // Fallback: FFT IR on the fly (tier transition / first frame)
@@ -401,4 +403,138 @@ void convolve_clusters(BaAudioContext* ctx, float* out_L, float* out_R, uint32_t
             ctx->overlap_R[n - (int)N] = ctx->fft_workspace_Y_R[n] * scale;
         }
     }
+}
+
+// ==========================================================================
+// 8. SOFA FILE LOADER — replace embedded HRTF database with measured data
+// ==========================================================================
+
+static float rad2deg(float r) { return r * 180.0f / 3.14159265f; }
+static float deg2rad(float d) { return d * 3.14159265f / 180.0f; }
+
+// Map a position (azimuth_deg, elevation_deg) to the nearest grid cell.
+static int pos_to_cell(float az_deg, float el_deg) {
+    while (az_deg > 180.0f)  az_deg -= 360.0f;
+    while (az_deg < -180.0f) az_deg += 360.0f;
+    el_deg = fmaxf(-90.0f, fminf(90.0f, el_deg));
+    int ca = (int)((az_deg + 180.0f) / 10.0f) % BA_GRID_AZ_CELLS;
+    if (ca < 0) ca += BA_GRID_AZ_CELLS;
+    int ce = (int)((el_deg + 90.0f) / 30.0f);
+    ce = (ce < 0) ? 0 : (ce >= BA_GRID_EL_CELLS) ? BA_GRID_EL_CELLS - 1 : ce;
+    return ca * BA_GRID_EL_CELLS + ce;
+}
+
+int ba_hrtf_load_sofa(BaAudioContext* ctx, const char* path) {
+    if (!ctx || !path) return -1; // BA_ERR_INVALID_ARG
+
+    BaSofaData sofa;
+    int err = sofa_parse(path, &sofa);
+    if (err != 0) { sofa_data_free(&sofa); return -5; }
+
+    if (sofa.num_positions == 0 || sofa.ir_length == 0) {
+        sofa_data_free(&sofa);
+        return -1;
+    }
+
+    uint32_t R = sofa.num_positions;
+    uint32_t N = sofa.ir_length;
+    uint32_t sr = sofa.sample_rate ? sofa.sample_rate : ctx->sample_rate;
+
+    int ir_len = (int)N;
+    if (ir_len > BA_HRTF_MAX_IR_LEN) ir_len = BA_HRTF_MAX_IR_LEN;
+
+    auto* new_db = (BaHRTFDatabase*)ctx->alloc_fn(sizeof(BaHRTFDatabase));
+    if (!new_db) { sofa_data_free(&sofa); return -2; }
+    memset(new_db, 0, sizeof(BaHRTFDatabase));
+    new_db->ir_length = ir_len;
+    new_db->sample_rate = sr;
+    new_db->loaded = true;
+    new_db->freq_valid = false;
+
+    new_db->cells = (BaHRTFEntry*)pffft_aligned_malloc(
+        (size_t)BA_GRID_TOTAL * sizeof(BaHRTFEntry));
+    if (!new_db->cells) { ctx->free_fn(new_db); sofa_data_free(&sofa); return -2; }
+    memset(new_db->cells, 0, (size_t)BA_GRID_TOTAL * sizeof(BaHRTFEntry));
+
+    // Accumulators for averaging IRs per grid cell
+    float* acc_L = (float*)calloc((size_t)BA_GRID_TOTAL * BA_HRTF_MAX_IR_LEN, sizeof(float));
+    float* acc_R = (float*)calloc((size_t)BA_GRID_TOTAL * BA_HRTF_MAX_IR_LEN, sizeof(float));
+    uint32_t* cell_counts = (uint32_t*)calloc((size_t)BA_GRID_TOTAL, sizeof(uint32_t));
+    if (!acc_L || !acc_R || !cell_counts) {
+        free(acc_L); free(acc_R); free(cell_counts);
+        pffft_aligned_free(new_db->cells); ctx->free_fn(new_db);
+        sofa_data_free(&sofa); return -2;
+    }
+
+    for (uint32_t i = 0; i < R; ++i) {
+        float az = sofa.positions ? sofa.positions[i * 3 + 0] : 0.0f;
+        float el = sofa.positions ? sofa.positions[i * 3 + 1] : 0.0f;
+        float az_deg = (fabsf(az) > 3.2f) ? az : rad2deg(az);
+        float el_deg = (fabsf(el) > 1.6f) ? el : rad2deg(el);
+        int cell = pos_to_cell(az_deg, el_deg);
+        if (cell < 0 || cell >= BA_GRID_TOTAL) continue;
+        int copy_len = ((int)N < ir_len) ? (int)N : ir_len;
+        for (int n = 0; n < copy_len; ++n) {
+            acc_L[cell * BA_HRTF_MAX_IR_LEN + n] += sofa.ir_left[i * N + n];
+            acc_R[cell * BA_HRTF_MAX_IR_LEN + n] += sofa.ir_right[i * N + n];
+        }
+        cell_counts[cell]++;
+    }
+
+    for (int cell = 0; cell < BA_GRID_TOTAL; ++cell) {
+        auto& entry = new_db->cells[cell];
+        entry.azimuth_deg   = -180.0f + (cell / BA_GRID_EL_CELLS) * 10.0f + 5.0f;
+        entry.elevation_deg = -90.0f  + (cell % BA_GRID_EL_CELLS) * 30.0f + 15.0f;
+        entry.ir_length = ir_len;
+        if (cell_counts[cell] == 0) { entry.valid = false; continue; }
+        float inv = 1.0f / (float)cell_counts[cell];
+        for (int n = 0; n < ir_len; ++n) {
+            entry.h_L[n] = acc_L[cell * BA_HRTF_MAX_IR_LEN + n] * inv;
+            entry.h_R[n] = acc_R[cell * BA_HRTF_MAX_IR_LEN + n] * inv;
+        }
+        entry.valid = true;
+    }
+    free(acc_L); free(acc_R); free(cell_counts);
+
+    // Pre-compute frequency-domain IRs
+    if (ctx->pffft_setup && ctx->fft_size > 0) {
+        int fft_size = ctx->fft_size;
+        size_t freq_sz = (size_t)BA_GRID_TOTAL * BA_HRTF_FREQ_BINS * sizeof(float);
+        new_db->freq_L = (float*)pffft_aligned_malloc(freq_sz);
+        new_db->freq_R = (float*)pffft_aligned_malloc(freq_sz);
+        if (new_db->freq_L && new_db->freq_R) {
+            for (int i = 0; i < BA_GRID_TOTAL; ++i) {
+                if (!new_db->cells[i].valid) continue;
+                float* tmp = (float*)pffft_aligned_malloc(fft_size * sizeof(float));
+                if (!tmp) continue;
+                memset(tmp, 0, fft_size * sizeof(float));
+                int cp = std::min(new_db->cells[i].ir_length, fft_size);
+                memcpy(tmp, new_db->cells[i].h_L, cp * sizeof(float));
+                pffft_transform_ordered(ctx->pffft_setup, tmp,
+                    new_db->freq_L + i * BA_HRTF_FREQ_BINS, nullptr, PFFFT_FORWARD);
+                memset(tmp, 0, fft_size * sizeof(float));
+                memcpy(tmp, new_db->cells[i].h_R, cp * sizeof(float));
+                pffft_transform_ordered(ctx->pffft_setup, tmp,
+                    new_db->freq_R + i * BA_HRTF_FREQ_BINS, nullptr, PFFFT_FORWARD);
+                pffft_aligned_free(tmp);
+            }
+            new_db->freq_valid = true;
+        }
+    }
+
+    // Free old database and install new one
+    if (ctx->hrtf_db) {
+        if (ctx->hrtf_db->cells)  pffft_aligned_free(ctx->hrtf_db->cells);
+        if (ctx->hrtf_db->freq_L) pffft_aligned_free(ctx->hrtf_db->freq_L);
+        if (ctx->hrtf_db->freq_R) pffft_aligned_free(ctx->hrtf_db->freq_R);
+        ctx->hrtf_db->~BaHRTFDatabase();
+        ctx->free_fn(ctx->hrtf_db);
+    }
+    ctx->hrtf_db = new_db;
+    ctx->hrtf_state.mode_current = BA_HRTF_MODE_FULL;
+    ctx->hrtf_state.mode_override = -1;
+    ctx->hrtf_state.personalized_loaded = false;
+
+    sofa_data_free(&sofa);
+    return 0;
 }

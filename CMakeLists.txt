@@ -29,6 +29,7 @@ add_library(beas_audio STATIC
     src/dsp/postprocess.cpp
     src/dsp/sanitize.cpp
     src/dsp/fft.cpp
+    src/hrtf/sofa_reader.cpp
     src/util/cpu.cpp
     src/util/flush.cpp
 )

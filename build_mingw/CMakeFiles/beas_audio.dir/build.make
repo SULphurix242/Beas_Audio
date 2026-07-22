@@ -251,11 +251,26 @@ CMakeFiles/beas_audio.dir/src/dsp/fft.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/beas_audio.dir/src/dsp/fft.cpp.s"
 	D:\Language\c++\ucrt64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S D:\BEAS\Beas_Audio\src\dsp\fft.cpp -o CMakeFiles\beas_audio.dir\src\dsp\fft.cpp.s
 
+CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj: CMakeFiles/beas_audio.dir/flags.make
+CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj: CMakeFiles/beas_audio.dir/includes_CXX.rsp
+CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj: D:/BEAS/Beas_Audio/src/hrtf/sofa_reader.cpp
+CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj: CMakeFiles/beas_audio.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=D:\BEAS\Beas_Audio\build_mingw\CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj"
+	D:\Language\c++\ucrt64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj -MF CMakeFiles\beas_audio.dir\src\hrtf\sofa_reader.cpp.obj.d -o CMakeFiles\beas_audio.dir\src\hrtf\sofa_reader.cpp.obj -c D:\BEAS\Beas_Audio\src\hrtf\sofa_reader.cpp
+
+CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.i"
+	D:\Language\c++\ucrt64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E D:\BEAS\Beas_Audio\src\hrtf\sofa_reader.cpp > CMakeFiles\beas_audio.dir\src\hrtf\sofa_reader.cpp.i
+
+CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.s"
+	D:\Language\c++\ucrt64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S D:\BEAS\Beas_Audio\src\hrtf\sofa_reader.cpp -o CMakeFiles\beas_audio.dir\src\hrtf\sofa_reader.cpp.s
+
 CMakeFiles/beas_audio.dir/src/util/cpu.cpp.obj: CMakeFiles/beas_audio.dir/flags.make
 CMakeFiles/beas_audio.dir/src/util/cpu.cpp.obj: CMakeFiles/beas_audio.dir/includes_CXX.rsp
 CMakeFiles/beas_audio.dir/src/util/cpu.cpp.obj: D:/BEAS/Beas_Audio/src/util/cpu.cpp
 CMakeFiles/beas_audio.dir/src/util/cpu.cpp.obj: CMakeFiles/beas_audio.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=D:\BEAS\Beas_Audio\build_mingw\CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/beas_audio.dir/src/util/cpu.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=D:\BEAS\Beas_Audio\build_mingw\CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/beas_audio.dir/src/util/cpu.cpp.obj"
 	D:\Language\c++\ucrt64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/beas_audio.dir/src/util/cpu.cpp.obj -MF CMakeFiles\beas_audio.dir\src\util\cpu.cpp.obj.d -o CMakeFiles\beas_audio.dir\src\util\cpu.cpp.obj -c D:\BEAS\Beas_Audio\src\util\cpu.cpp
 
 CMakeFiles/beas_audio.dir/src/util/cpu.cpp.i: cmake_force
@@ -270,7 +285,7 @@ CMakeFiles/beas_audio.dir/src/util/flush.cpp.obj: CMakeFiles/beas_audio.dir/flag
 CMakeFiles/beas_audio.dir/src/util/flush.cpp.obj: CMakeFiles/beas_audio.dir/includes_CXX.rsp
 CMakeFiles/beas_audio.dir/src/util/flush.cpp.obj: D:/BEAS/Beas_Audio/src/util/flush.cpp
 CMakeFiles/beas_audio.dir/src/util/flush.cpp.obj: CMakeFiles/beas_audio.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=D:\BEAS\Beas_Audio\build_mingw\CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/beas_audio.dir/src/util/flush.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=D:\BEAS\Beas_Audio\build_mingw\CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/beas_audio.dir/src/util/flush.cpp.obj"
 	D:\Language\c++\ucrt64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/beas_audio.dir/src/util/flush.cpp.obj -MF CMakeFiles\beas_audio.dir\src\util\flush.cpp.obj.d -o CMakeFiles\beas_audio.dir\src\util\flush.cpp.obj -c D:\BEAS\Beas_Audio\src\util\flush.cpp
 
 CMakeFiles/beas_audio.dir/src/util/flush.cpp.i: cmake_force
@@ -295,6 +310,7 @@ beas_audio_OBJECTS = \
 "CMakeFiles/beas_audio.dir/src/dsp/postprocess.cpp.obj" \
 "CMakeFiles/beas_audio.dir/src/dsp/sanitize.cpp.obj" \
 "CMakeFiles/beas_audio.dir/src/dsp/fft.cpp.obj" \
+"CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj" \
 "CMakeFiles/beas_audio.dir/src/util/cpu.cpp.obj" \
 "CMakeFiles/beas_audio.dir/src/util/flush.cpp.obj"
 
@@ -313,11 +329,12 @@ libbeas_audio.a: CMakeFiles/beas_audio.dir/src/dsp/ambient.cpp.obj
 libbeas_audio.a: CMakeFiles/beas_audio.dir/src/dsp/postprocess.cpp.obj
 libbeas_audio.a: CMakeFiles/beas_audio.dir/src/dsp/sanitize.cpp.obj
 libbeas_audio.a: CMakeFiles/beas_audio.dir/src/dsp/fft.cpp.obj
+libbeas_audio.a: CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj
 libbeas_audio.a: CMakeFiles/beas_audio.dir/src/util/cpu.cpp.obj
 libbeas_audio.a: CMakeFiles/beas_audio.dir/src/util/flush.cpp.obj
 libbeas_audio.a: CMakeFiles/beas_audio.dir/build.make
 libbeas_audio.a: CMakeFiles/beas_audio.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=D:\BEAS\Beas_Audio\build_mingw\CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Linking CXX static library libbeas_audio.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=D:\BEAS\Beas_Audio\build_mingw\CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Linking CXX static library libbeas_audio.a"
 	$(CMAKE_COMMAND) -P CMakeFiles\beas_audio.dir\cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\beas_audio.dir\link.txt --verbose=$(VERBOSE)
 

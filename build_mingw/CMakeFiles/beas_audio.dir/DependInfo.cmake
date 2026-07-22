@@ -16,6 +16,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "D:/BEAS/Beas_Audio/src/dsp/postprocess.cpp" "CMakeFiles/beas_audio.dir/src/dsp/postprocess.cpp.obj" "gcc" "CMakeFiles/beas_audio.dir/src/dsp/postprocess.cpp.obj.d"
   "D:/BEAS/Beas_Audio/src/dsp/sanitize.cpp" "CMakeFiles/beas_audio.dir/src/dsp/sanitize.cpp.obj" "gcc" "CMakeFiles/beas_audio.dir/src/dsp/sanitize.cpp.obj.d"
   "D:/BEAS/Beas_Audio/src/dsp/simd.cpp" "CMakeFiles/beas_audio.dir/src/dsp/simd.cpp.obj" "gcc" "CMakeFiles/beas_audio.dir/src/dsp/simd.cpp.obj.d"
+  "D:/BEAS/Beas_Audio/src/hrtf/sofa_reader.cpp" "CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj" "gcc" "CMakeFiles/beas_audio.dir/src/hrtf/sofa_reader.cpp.obj.d"
   "D:/BEAS/Beas_Audio/src/masking/masking.cpp" "CMakeFiles/beas_audio.dir/src/masking/masking.cpp.obj" "gcc" "CMakeFiles/beas_audio.dir/src/masking/masking.cpp.obj.d"
   "D:/BEAS/Beas_Audio/src/pci/pci.cpp" "CMakeFiles/beas_audio.dir/src/pci/pci.cpp.obj" "gcc" "CMakeFiles/beas_audio.dir/src/pci/pci.cpp.obj.d"
   "D:/BEAS/Beas_Audio/src/phsm/phsm.cpp" "CMakeFiles/beas_audio.dir/src/phsm/phsm.cpp.obj" "gcc" "CMakeFiles/beas_audio.dir/src/phsm/phsm.cpp.obj.d"

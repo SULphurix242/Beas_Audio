@@ -21,7 +21,8 @@ typedef enum {
     BA_ERR_INVALID_ARG  = -1,
     BA_ERR_NO_MEMORY    = -2,
     BA_ERR_CPUID_FAIL   = -3,
-    BA_ERR_NOT_INIT     = -4
+    BA_ERR_NOT_INIT     = -4,
+    BA_ERR_FILE_IO      = -5
 } BaResult;
 
 /* ---- Processing path --------------------------------------------------- */
@@ -148,11 +149,19 @@ void      ba_set_hrtf_mode(BaAudioContext* ctx, BaHRTFMode mode);
 BaHRTFMode ba_get_hrtf_mode(const BaAudioContext* ctx);
 
 /* ---- Surround-to-binaural ----------------------------------------------- */
+typedef struct {
+    float azimuth;    // radians
+    float elevation;  // radians
+} BaSpeakerPos;
+
 BaResult ba_process_surround(BaAudioContext* ctx,
                              const float** channel_buffers,
                              int n_channels,
                              float* out_L, float* out_R,
                              uint32_t N_samples);
+BaResult ba_surround_set_layout(BaAudioContext* ctx,
+                                const BaSpeakerPos* positions,
+                                int n_channels);
 
 #ifdef __cplusplus
 }
